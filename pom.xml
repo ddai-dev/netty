@@ -79,6 +79,8 @@
         <!-- Use no classifier as we only support x86_64 atm-->
         <tcnative.classifier />
         <skipShadingTestsuite>true</skipShadingTestsuite>
+        <maven.compiler.target>1.9</maven.compiler.target>
+        <maven.compiler.source>1.9</maven.compiler.source>
       </properties>
     </profile>
 
