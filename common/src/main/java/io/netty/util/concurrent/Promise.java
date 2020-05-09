@@ -16,6 +16,10 @@
 package io.netty.util.concurrent;
 
 /**
+ * Promise 实例内部是一个任务, 任务的执行往往是异步的, 通常是一个线程池来处理
+ * 编程方式
+ *      1. 一种是用 await()，等 await() 方法返回后，得到 promise 的执行结果，然后处理它
+ *      2. 另一种就是提供 Listener 实例，我们不太关心任务什么时候会执行完，只要它执行完了以后会去执行 listener 中的处理方法就行
  * Special {@link Future} which is writable.
  */
 public interface Promise<V> extends Future<V> {
@@ -23,6 +27,7 @@ public interface Promise<V> extends Future<V> {
     /**
      * Marks this future as a success and notifies all
      * listeners.
+     * 标记成功, 调用所有的 listeners
      *
      * If it is success or failed already it will throw an {@link IllegalStateException}.
      */
@@ -31,6 +36,7 @@ public interface Promise<V> extends Future<V> {
     /**
      * Marks this future as a success and notifies all
      * listeners.
+     * 和 setSuccess 一样, 只不过如果失败，它不抛异常，返回 false
      *
      * @return {@code true} if and only if successfully marked this future as
      *         a success. Otherwise {@code false} because this future is
@@ -41,7 +47,7 @@ public interface Promise<V> extends Future<V> {
     /**
      * Marks this future as a failure and notifies all
      * listeners.
-     *
+     * 标记失败, 以及失败的原因
      * If it is success or failed already it will throw an {@link IllegalStateException}.
      */
     Promise<V> setFailure(Throwable cause);
@@ -49,7 +55,7 @@ public interface Promise<V> extends Future<V> {
     /**
      * Marks this future as a failure and notifies all
      * listeners.
-     *
+     * 同 setFailure, 不抛异常
      * @return {@code true} if and only if successfully marked this future as
      *         a failure. Otherwise {@code false} because this future is
      *         already marked as either a success or a failure.
@@ -58,12 +64,14 @@ public interface Promise<V> extends Future<V> {
 
     /**
      * Make this future impossible to cancel.
+     * 标记该 future 不可以被取消
      *
      * @return {@code true} if and only if successfully marked this future as uncancellable or it is already done
      *         without being cancelled.  {@code false} if this future has been cancelled already.
      */
     boolean setUncancellable();
 
+    // 这里和 ChannelFuture 一样，对这几个方法进行覆写，目的是为了返回 Promise 类型的实例
     @Override
     Promise<V> addListener(GenericFutureListener<? extends Future<? super V>> listener);
 

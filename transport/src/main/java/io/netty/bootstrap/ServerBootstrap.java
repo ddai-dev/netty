@@ -153,6 +153,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             }
         }
 
+        // 拿到刚刚创建的 channel 内部的 pipeline 实例
         ChannelPipeline p = channel.pipeline();
 
         final EventLoopGroup currentChildGroup = childGroup;
@@ -166,18 +167,24 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             currentChildAttrs = childAttrs.entrySet().toArray(newAttrArray(0));
         }
 
+        // 开始往 pipeline 中添加一个 handler，这个 handler 是 ChannelInitializer 的实例
         p.addLast(new ChannelInitializer<Channel>() {
+            // ChannelInitializer 是一个辅助类, 把 其它的 handler 加入到 pipeline 中
             @Override
             public void initChannel(final Channel ch) throws Exception {
                 final ChannelPipeline pipeline = ch.pipeline();
+                // 这个方法返回我们最开始指定的 LoggingHandler 实例 (io.netty.example.echo.EchoServer.handler() )
                 ChannelHandler handler = config.handler();
                 if (handler != null) {
                     pipeline.addLast(handler);
                 }
 
+                // todo
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {
+                        // 添加一个 handler 到 pipeline 中：ServerBootstrapAcceptor
+                        // 从名字可以看到，这个 handler 的目的是用于接收客户端请求
                         pipeline.addLast(new ServerBootstrapAcceptor(
                                 ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
                     }

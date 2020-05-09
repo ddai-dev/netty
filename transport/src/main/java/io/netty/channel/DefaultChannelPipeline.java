@@ -89,6 +89,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
      */
     private boolean registered;
 
+    /**
+     * pipline 中的每个元素都是 AbstractChannelHandlerContext 的子类 DefaultChannelHandlerContext
+     *
+     * head + channelInitializer + tail
+     *
+     * @param channel
+     */
     protected DefaultChannelPipeline(Channel channel) {
         this.channel = ObjectUtil.checkNotNull(channel, "channel");
         succeededFuture = new SucceededChannelFuture(channel, null);

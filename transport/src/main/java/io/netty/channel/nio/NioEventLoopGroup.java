@@ -84,6 +84,7 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
 
     public NioEventLoopGroup(int nThreads, Executor executor, final SelectorProvider selectorProvider,
                              final SelectStrategyFactory selectStrategyFactory) {
+
         super(nThreads, executor, selectorProvider, selectStrategyFactory, RejectedExecutionHandlers.reject());
     }
 
@@ -94,6 +95,20 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
                 RejectedExecutionHandlers.reject());
     }
 
+
+    /**
+     * 默认值   selector = SelectorProvider.provider()
+     * selectStrategyFactory = DefaultSelectStrategyFactory.INSTANCE
+     * rejectedExecutionHandler = RejectedExecutionHandlers.reject() 抛出异常
+     *
+     *
+     * @param nThreads 线程池中的线程数, 也就是 NioEventLoop 的实例数量
+     * @param executor  我们本身就是要构造一个线程池（Executor），为什么这里传一个 executor 实例呢？它其实不是给线程池用的，而是给 NioEventLoop 用的
+     * @param chooserFactory 提交任务到线程池的时候, 线程池需要选择 choose 其中的一个线程来执行这个任务, 这个就是用来实现选择策略
+     * @param selectorProvider 我们需要通过它来实例化 JDK 的 Selector，可以看到每个线程池都持有一个 selectorProvider 实例
+     * @param selectStrategyFactory 这个涉及到的是线程池中线程的工作流程
+     * @param rejectedExecutionHandler  这个也是线程池的好朋友了，用于处理线程池中没有可用的线程来执行任务的情况。在 Netty 中稍微有一点点不一样，这个是给 NioEventLoop 实例用的
+     */
     public NioEventLoopGroup(int nThreads, Executor executor, EventExecutorChooserFactory chooserFactory,
                              final SelectorProvider selectorProvider,
                              final SelectStrategyFactory selectStrategyFactory,
@@ -121,6 +136,13 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
         }
     }
 
+    /**
+     *
+     * @param executor
+     * @param args
+     * @return
+     * @throws Exception
+     */
     @Override
     protected EventLoop newChild(Executor executor, Object... args) throws Exception {
         return new NioEventLoop(this, executor, (SelectorProvider) args[0],

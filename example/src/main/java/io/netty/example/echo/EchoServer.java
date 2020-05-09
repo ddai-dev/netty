@@ -49,31 +49,34 @@ public final class EchoServer {
         }
 
         // Configure the server.
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        // 创建两个 EventLoopGroup 对象
+        EventLoopGroup bossGroup = new NioEventLoopGroup(1); // 创建 boss 线程组 用于服务端接受客户端的连接
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        final EchoServerHandler serverHandler = new EchoServerHandler();
+        final EchoServerHandler serverHandler = new EchoServerHandler(); // // 创建 worker 线程组用于进行 SocketChannel 的数据读写
         try {
             ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup)
-             .channel(NioServerSocketChannel.class)
-             .option(ChannelOption.SO_BACKLOG, 100)
-             .handler(new LoggingHandler(LogLevel.INFO))
-             .childHandler(new ChannelInitializer<SocketChannel>() {
-                 @Override
-                 public void initChannel(SocketChannel ch) throws Exception {
-                     ChannelPipeline p = ch.pipeline();
-                     if (sslCtx != null) {
-                         p.addLast(sslCtx.newHandler(ch.alloc()));
-                     }
-                     //p.addLast(new LoggingHandler(LogLevel.INFO));
-                     p.addLast(serverHandler);
-                 }
-             });
+            b.group(bossGroup, workerGroup) // 设置使用的 EventLoopGroup
+                    .channel(NioServerSocketChannel.class)  // 设置要被实例化的为 NioServerSocketChannel 类
+                    .option(ChannelOption.SO_BACKLOG, 100)  // 设置 NioServerSocketChannel 的可选项
+                    .handler(new LoggingHandler(LogLevel.INFO)) // 设置 NioServerSocketChannel 的处理器
+                    .childHandler(new ChannelInitializer<SocketChannel>() { // 设置连入服务端的 Client 的 SocketChannel 的处理器
+                        @Override
+                        public void initChannel(SocketChannel ch) throws Exception {
+                            ChannelPipeline p = ch.pipeline();
+                            if (sslCtx != null) {
+                                p.addLast(sslCtx.newHandler(ch.alloc()));
+                            }
+                            //p.addLast(new LoggingHandler(LogLevel.INFO));
+                            p.addLast(serverHandler);
+                        }
+                    });
 
             // Start the server.
+            // 绑定端口，并同步等待成功，即启动服务端
             ChannelFuture f = b.bind(PORT).sync();
 
             // Wait until the server socket is closed.
+            // 监听服务端关闭，并阻塞等待
             f.channel().closeFuture().sync();
         } finally {
             // Shut down all event loops to terminate all threads.

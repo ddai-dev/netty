@@ -69,6 +69,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      * Create a new instance
      */
     public NioServerSocketChannel() {
+        // 创建 ServerSocketChannel, 在父类中初始化 pipeline
         this(newSocket(DEFAULT_SELECTOR_PROVIDER));
     }
 
@@ -83,6 +84,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      * Create a new instance using the given {@link ServerSocketChannel}.
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
+        // 对于服务端来说，关心的是 SelectionKey.OP_ACCEPT 事件，等待客户端连接
         super(null, channel, SelectionKey.OP_ACCEPT);
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }

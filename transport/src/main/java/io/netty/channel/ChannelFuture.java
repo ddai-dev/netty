@@ -161,6 +161,10 @@ import java.util.concurrent.TimeUnit;
  *     // Connection established successfully
  * }
  * </pre>
+ *
+ * ChannelFuture 接口相对于 Future 接口，除了将 channel 关联进来，没有增加什么东西
+ * 还有个 isVoid() 方法算是不那么重要的存在吧
+ * 其他几个都是方法覆写，为了让返回值类型变为 ChannelFuture，而不是原来的 Future
  */
 public interface ChannelFuture extends Future<Void> {
 
@@ -170,6 +174,7 @@ public interface ChannelFuture extends Future<Void> {
      */
     Channel channel();
 
+    // 覆写以下几个方法，使得它们返回值为 ChannelFuture 类型
     @Override
     ChannelFuture addListener(GenericFutureListener<? extends Future<? super Void>> listener);
 
@@ -195,6 +200,7 @@ public interface ChannelFuture extends Future<Void> {
     ChannelFuture awaitUninterruptibly();
 
     /**
+     * // 用来标记该 future 是 void 的，这样就不允许 addListener
      * Returns {@code true} if this {@link ChannelFuture} is a void future and so not allow to call any of the
      * following methods:
      * <ul>
