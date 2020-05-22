@@ -164,6 +164,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
         final ChannelFuture regFuture = initAndRegister();
         final Channel channel = regFuture.channel();
 
+        // 这里我们不去纠结 register 操作是否 isDone()
         if (regFuture.isDone()) {
             if (!regFuture.isSuccess()) {
                 return regFuture;
@@ -263,6 +264,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
     @SuppressWarnings("unchecked")
     void init(Channel channel) throws Exception {
         ChannelPipeline p = channel.pipeline();
+        // 它只需要将 EchoClient 类中的 ChannelInitializer 实例加进来就可以了 (LoggingHandler  EchoClientHandler)
         p.addLast(config.handler());
 
         final Map<ChannelOption<?>, Object> options = options0();

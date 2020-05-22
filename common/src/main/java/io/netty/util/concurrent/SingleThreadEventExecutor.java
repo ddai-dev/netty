@@ -148,10 +148,15 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     /**
+     * 它的名字告诉我们，它是一个 Executor，是一个线程池，而且是 Single Thread 单线程的
+     * 线程池 NioEventLoopGroup 中的每一个线程 NioEventLoop 也可以当做一个线程池来用，只不过它只有一个线程。这种设计虽然看上去很巧妙，不过有点反人类的样子
      * Create a new instance
      *
      * @param parent            the {@link EventExecutorGroup} which is the parent of this instance and belongs to it
+     *                          设置了 parent，也就是之前创建的线程池 NioEventLoopGroup 实例
      * @param executor          the {@link Executor} which will be used for executing
+     *                          它是我们之前实例化的 ThreadPerTaskExecutor，我们说过，这个东西在线程池中没有用，它是给 NioEventLoop 用的，马上我们就要看到它了
+     *                          它用来开启 NioEventLoop 中的线程（Thread 实例）
      * @param addTaskWakesUp    {@code true} if and only if invocation of {@link #addTask(Runnable)} will wake up the
      *                          executor thread
      * @param maxPendingTasks   the maximum number of pending tasks before new tasks will be rejected.

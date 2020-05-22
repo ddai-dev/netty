@@ -61,10 +61,13 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     /**
      * Create a new instance.
      *
-     * @param nThreads          the number of threads that will be used by this instance.
+     * @param nThreads          the number of threads that will be used by this instance. 使用线程数, 默认 core * 2
      * @param executor          the Executor to use, or {@code null} if the default should be used.
+     *                          执行器, 如果传入 null, 则采用 Netty 默认的线程工厂和默认执行器 ThreadPerTaskExecutor
      * @param chooserFactory    the {@link EventExecutorChooserFactory} to use.
+     *                          单例 new DefaultEventExecutorChooserFactory()
      * @param args              arguments which will passed to each {@link #newChild(Executor, Object...)} call
+     *                          args 在创建执行器的时候传入固定参数
      */
     protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
                                             EventExecutorChooserFactory chooserFactory, Object... args) {
@@ -166,6 +169,15 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     }
 
     /**
+     * NioEventLoopGroup 覆盖方法 构造 NioEventLoop 函数如下
+     *     NioEventLoop(NioEventLoopGroup parent, Executor executor, SelectorProvider selectorProvider,
+     *                  SelectStrategy strategy, RejectedExecutionHandler rejectedExecutionHandler)
+     *                           parent: this
+     *                           executor: ThreadPerTaskExecutor
+     *                           selectorProvider: DefaultSelectStrategyFactory
+     *                           strategy:   KQueueSelectorProvider
+     *                           rejectedExecutionHandler:   RejectedExecutionHandlers
+     *
      * Create a new EventExecutor which will later then accessible via the {@link #next()}  method. This method will be
      * called for each thread that will serve this {@link MultithreadEventExecutorGroup}.
      *

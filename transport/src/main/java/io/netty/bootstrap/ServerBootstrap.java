@@ -137,14 +137,23 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         return this;
     }
 
+    /**
+     * #1. 对channel 的config变量里添加options属性
+     * #2. 对channel 的config变量里添加attrs属性
+     * #3. 获取channel 对象的pipeline管道，然后在管道里面添加一个handler，该handler作用有：添加bootstrap里的handler
+     * @param channel
+     * @throws Exception
+     */
     @Override
     void init(Channel channel) throws Exception {
         final Map<ChannelOption<?>, Object> options = options0();
         synchronized (options) {
+            // #1
             setChannelOptions(channel, options, logger);
         }
 
         final Map<AttributeKey<?>, Object> attrs = attrs0();
+        // #2
         synchronized (attrs) {
             for (Entry<AttributeKey<?>, Object> e: attrs.entrySet()) {
                 @SuppressWarnings("unchecked")
@@ -168,8 +177,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         }
 
         // 开始往 pipeline 中添加一个 handler，这个 handler 是 ChannelInitializer 的实例
+        // #4
         p.addLast(new ChannelInitializer<Channel>() {
             // ChannelInitializer 是一个辅助类, 把 其它的 handler 加入到 pipeline 中
+            // LoggingHandler 和 ServerBootstrapAcceptor (EchoServer)
             @Override
             public void initChannel(final Channel ch) throws Exception {
                 final ChannelPipeline pipeline = ch.pipeline();

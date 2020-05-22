@@ -86,6 +86,8 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
     @Override
     public ChannelFuture register(Channel channel) {
         // next() 方法很简单，就是选择线程池中的一个线程（还记得 chooserFactory 吗），也就是选择一个 NioEventLoop 实例
+        // next() 返回 NioEventLoop
+        // NioEventLoop 的 register(channel) 方法实现在它的父类 SingleThreadEventLoop 中
         return next().register(channel);
     }
 

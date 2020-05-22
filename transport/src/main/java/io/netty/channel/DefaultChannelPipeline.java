@@ -90,7 +90,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private boolean registered;
 
     /**
-     * pipline 中的每个元素都是 AbstractChannelHandlerContext 的子类 DefaultChannelHandlerContext
+     * pipline 中的每个元素都是 ChannelHandlerContext 的实例, context 包装了一下 handler
      *
      * head + channelInitializer + tail
      *
@@ -101,7 +101,10 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         succeededFuture = new SucceededChannelFuture(channel, null);
         voidPromise =  new VoidChannelPromise(channel, true);
 
+
+        // tail 实现了 ChannelInboundHandler
         tail = new TailContext(this);
+        // head 实现了 ChannelOutboundHandler 和 ChannelInboundHandler
         head = new HeadContext(this);
 
         head.next = tail;
@@ -861,8 +864,16 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return buf.toString();
     }
 
+    /**
+     * 我们往 pipeline 中扔了一个 channelRegistered 事件，这里的 register 属于 Inbound 事件
+     * pipeline 接下来要做的就是执行 pipeline 中的 Inbound 类型的 handlers 中的 channelRegistered() 方法
+     *
+     * 往 pipeline 中扔出 channelRegistered 事件以后，第一个处理的 handler 是 head
+     * @return
+     */
     @Override
     public final ChannelPipeline fireChannelRegistered() {
+        // 注意这里的传参是 head
         AbstractChannelHandlerContext.invokeChannelRegistered(head);
         return this;
     }
@@ -1410,7 +1421,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+            // 1. 这一步是 head 对于 channelRegistered 事件的处理。没有我们要关心的
             invokeHandlerAddedIfNeeded();
+            // 2. 向后传播 Inbound 事件
             ctx.fireChannelRegistered();
         }
 

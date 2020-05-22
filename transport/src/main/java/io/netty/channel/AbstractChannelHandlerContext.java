@@ -131,7 +131,9 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
 
     static void invokeChannelRegistered(final AbstractChannelHandlerContext next) {
         EventExecutor executor = next.executor();
+        // 执行 head 的 invokeChannelRegistered()
         if (executor.inEventLoop()) {
+            // 这里会先执行 head.invokeChannelRegistered() 方法，而且是放到 NioEventLoop 中的 taskQueue 中执行的
             next.invokeChannelRegistered();
         } else {
             executor.execute(new Runnable() {
@@ -146,6 +148,7 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
     private void invokeChannelRegistered() {
         if (invokeHandler()) {
             try {
+                // handler() 方法此时会返回 head // HeadContext#channelRegistered
                 ((ChannelInboundHandler) handler()).channelRegistered(this);
             } catch (Throwable t) {
                 notifyHandlerException(t);

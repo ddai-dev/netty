@@ -82,7 +82,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         this.parent = parent;
         // 给每个 channel 分配一个唯一 id
         id = newId();
-        // 每个 channel 内部需要一个 Unsafe 的实例
+        // 每个 channel 内部需要一个 Unsafe 的实例 (封装了大部分需要访问 JDK 的 NIO 接口的操作就好了)
         unsafe = newUnsafe();
         // 每个 channel 内部都会创建一个 pipeline
         pipeline = newChannelPipeline();
@@ -459,6 +459,13 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             return remoteAddress0();
         }
 
+        /**
+         * Channel 实例一旦 register 到了 NioEventLoopGroup 实例中的某个 NioEventLoop 实例，那么后续该 Channel 的所有操作，都是由该 NioEventLoop 实例来完成的
+         *
+         * 这个也非常简单，因为 Selector 实例是在 NioEventLoop 实例中的，Channel 实例一旦注册到某个 Selector 实例中，当然也只能在这个实例中处理 NIO 事件。
+         * @param eventLoop
+         * @param promise
+         */
         @Override
         public final void register(EventLoop eventLoop, final ChannelPromise promise) {
             if (eventLoop == null) {

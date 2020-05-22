@@ -58,6 +58,7 @@ public final class EchoServer {
             b.group(bossGroup, workerGroup) // 设置使用的 EventLoopGroup
                     .channel(NioServerSocketChannel.class)  // 设置要被实例化的为 NioServerSocketChannel 类
                     .option(ChannelOption.SO_BACKLOG, 100)  // 设置 NioServerSocketChannel 的可选项
+                    // bind() -> doBind() -> initAndRegister() 的时候, 回去注册
                     .handler(new LoggingHandler(LogLevel.INFO)) // 设置 NioServerSocketChannel 的处理器
                     .childHandler(new ChannelInitializer<SocketChannel>() { // 设置连入服务端的 Client 的 SocketChannel 的处理器
                         @Override

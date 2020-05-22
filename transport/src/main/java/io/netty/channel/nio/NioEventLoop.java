@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 每个 NioEventLoop 实例内部都会有一个自己的 Thread 实例
+ *
  * {@link SingleThreadEventLoop} implementation which register the {@link Channel}'s to a
  * {@link Selector} and so does the multi-plexing of these in the event loop.
  *
@@ -115,12 +115,14 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     }
 
     /**
+     * 在 Netty 中 Selector 是跟着线程池中的线程走的。也就是说，并非一个线程池一个 Selector 实例，而是线程池中每一个线程都有一个 Selector 实例
      * The NIO {@link Selector}.
      */
     private Selector selector;
     private Selector unwrappedSelector;
     private SelectedSelectionKeySet selectedKeys;
 
+    // 它由 NioEventLoopGroup 传进来, 用于创建 Selector 实例
     private final SelectorProvider provider;
 
     /**
@@ -131,6 +133,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
      */
     private final AtomicBoolean wakenUp = new AtomicBoolean();
 
+    // select 操作的策略
     private final SelectStrategy selectStrategy;
 
     // 这是 IO 任务的执行时间比例，因为每个线程既有 IO 任务执行，也有非 IO 任务需要执行，所以该参数为了保证有足够时间是给 IO 的
@@ -139,16 +142,27 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     private boolean needsToSelectAgain;
 
     /**
+     * 1. 在 Netty 中，NioEventLoopGroup 代表线程池，NioEventLoop 就是其中的线程
+     * 2. 线程池 NioEventLoopGroup 是池中的线程 NioEventLoop 的 parent，从上面的代码中的取名可以看出
+     * 3. 每个 NioEventLoop 都有自己的 Selector，上面的代码也反应了这一点，这和 Tomcat 中的 NIO 模型有点区别
+     * 4. executor、selectStrategy 和 rejectedExecutionHandler 从 NioEventLoopGroup 中一路传到了 NioEventLoop 中
+     * 5. 线程池 NioEventLoopGroup 中的每一个线程 NioEventLoop 也可以当做一个线程池来用，只不过它只有一个线程 (SingleThreadEventExecutor)
+     *
+     *
+     * NioEventLoop 需要负责 IO 事件和非 IO 事件, 通常它都在执行 selector 的 select 方法或者正在处理 selectedKeys
+     * 如果我们要 submit 一个任务给它，任务就会被放到 taskQueue 中，等它来轮询. 该队列是线程安全的 LinkedBlockingQueue，默认容量为 16
      *
      * @param parent
      * @param executor
-     * @param selectorProvider 它由 NioEventLoopGroup 传进来，前面我们说了一个线程池有一个 selectorProvider，用于创建 Selector 实例
+     * @param selectorProvider
      * @param strategy
      * @param rejectedExecutionHandler
      */
     NioEventLoop(NioEventLoopGroup parent, Executor executor, SelectorProvider selectorProvider,
                  SelectStrategy strategy, RejectedExecutionHandler rejectedExecutionHandler) {
         // 调用父类构造器
+        // 在父类(SingleThreadEventExecutor taskQueue = newTaskQueue(this.maxPendingTasks))中会构造 taskQueue
+        // 线程池 NioEventLoopGroup 中的每一个线程 NioEventLoop 也可以当做一个线程池来用，只不过它只有一个线程
         super(parent, executor, false, DEFAULT_MAX_PENDING_TASKS, rejectedExecutionHandler);
         if (selectorProvider == null) {
             throw new NullPointerException("selectorProvider");
@@ -413,6 +427,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     }
 
     /**
+     * 这个方法肯定是没那么容易结束的，必然是像 JDK 线程池的 Worker 那样，不断地循环获取新的任务的。它需要不断地做 select 操作和轮询 taskQueue 这个队列
+     *
      * -  首先，会根据 hasTasks() 的结果来决定是执行 selectNow() 还是 select(oldWakenUp)，这个应该好理解。
      *    如果有任务正在等待，那么应该使用无阻塞的 selectNow()，如果没有任务在等待，那么就可以使用带阻塞的 select 操作。
      * -  ioRatio 控制 IO 操作所占的时间比重：

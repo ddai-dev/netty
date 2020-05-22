@@ -277,12 +277,14 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return regFuture;
         }
 
+        // 判断channel是否注册成功， 如果已经注册成功那么就进行doBind0()方法
         if (regFuture.isDone()) {
             // At this point we know that the registration was complete and successful.
             ChannelPromise promise = channel.newPromise();
             doBind0(regFuture, channel, localAddress, promise);
             return promise;
         } else {
+            // 没有成功, 那么增加监听, 等待成功, 执行 doBind0()
             // Registration future is almost always fulfilled already, but just in case it's not.
             final PendingRegistrationPromise promise = new PendingRegistrationPromise(channel);
             regFuture.addListener(new ChannelFutureListener() {
@@ -327,7 +329,8 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
 
         // 前面的 channle 已经完成了下面动作
         // 实例化了 JDK 底层的 Channel，设置了非阻塞，实例化了 Unsafe，实例化了 Pipeline，同时往 pipeline 中添加了 head、tail 以及一个 ChannelInitializer 实例
-        // config().group() 方法会返回前面实例化的 NioEventLoopGroup (MultithreadEventLoopGroup) 的实例
+        // config().group() 方法会返回前面实例化的 NioEventLoopGroup  的实例
+        // MultithreadEventLoopGroup.register(channel)
         ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
@@ -346,11 +349,17 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         //         because bind() or connect() will be executed *after* the scheduled registration task is executed
         //         because register(), bind(), and connect() are all bound to the same thread.
 
+
+        // 源码中说得很清楚，如果到这里，说明后续可以进行 connect() 或 bind() 了，因为两种情况：
+        // 1. 如果 register 动作是在 eventLoop 中发起的，那么到这里的时候，register 一定已经完成
+        // 2. 如果 register 任务已经提交到 eventLoop 中，也就是进到了 eventLoop 中的 taskQueue 中，
+        //    由于后续的 connect 或 bind 也会进入到同一个 eventLoop 的 queue 中，所以一定是会先 register 成功，才会执行 connect 或 bind
         return regFuture;
     }
 
     abstract void init(Channel channel) throws Exception;
 
+    // channel 已经注册到 selector 上面了
     private static void doBind0(
             final ChannelFuture regFuture, final Channel channel,
             final SocketAddress localAddress, final ChannelPromise promise) {
