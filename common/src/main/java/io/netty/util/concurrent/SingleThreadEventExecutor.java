@@ -168,6 +168,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         super(parent);
         this.addTaskWakesUp = addTaskWakesUp;
         this.maxPendingTasks = Math.max(16, maxPendingTasks);
+        // 它用来开启 NioEventLoop 中的线程
         this.executor = ObjectUtil.checkNotNull(executor, "executor");
         // taskQueue，这个东西很重要，提交给 NioEventLoop 的任务都会进入到这个 taskQueue 中等待被执行
         // 这个 queue 的默认容量是 16
